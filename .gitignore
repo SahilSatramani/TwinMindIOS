@@ -1,0 +1,17 @@
+# Xcode
+DerivedData/
+*.xcworkspace
+*.xcuserstate
+*.xcuserdata/
+
+# SwiftPM
+.build/
+
+# Logs
+*.log
+
+# OS junk
+.DS_Store
+
+# Bundle/IDE
+*.idea/
