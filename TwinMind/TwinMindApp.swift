@@ -27,6 +27,6 @@ struct TwinMindApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(for: [RecordingSession.self, TranscriptChunk.self])
     }
 }
