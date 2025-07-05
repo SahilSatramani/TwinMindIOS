@@ -49,11 +49,14 @@ final class TranscriptionViewModel: ObservableObject {
     private func transcribeSegment(fileURL: URL, time: Date) {
         whisper.transcribeAudio(url: fileURL) { [weak self] result in
             DispatchQueue.main.async {
-                guard let self = self, let text = result else { return }
+                guard let self = self,
+                      let text = result,
+                      let session = self.currentSession else { return }
 
-                let chunk = TranscriptChunk(timestamp: time, text: text, session: self.currentSession)
+                let chunk = TranscriptChunk(timestamp: time, text: text, session: session)
                 self.transcriptChunks.append(chunk)
                 self.modelContext?.insert(chunk)
+                session.transcriptChunks.append(chunk) 
             }
         }
     }
