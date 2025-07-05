@@ -1,5 +1,5 @@
 import SwiftUI
-
+import SwiftData
 enum TranscriptionTab: String, CaseIterable {
     case notes = "Notes"
     case transcript = "Transcript"
@@ -8,9 +8,10 @@ enum TranscriptionTab: String, CaseIterable {
 struct TranscriptionScreen: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Query var sessions: [RecordingSession]
     @State private var selectedTab: TranscriptionTab = .transcript
     @State private var sessionTitle: String = "Untitled"
-
+    
     @StateObject private var viewModel = TranscriptionViewModel()
 
     @State private var recordingStartTime: Date?
@@ -48,6 +49,8 @@ struct TranscriptionScreen: View {
                 viewModel.setContext(modelContext)
                 viewModel.start()
                 startTimer()
+                
+                print("🗂 Total saved sessions: \(sessions.count)")
             }
             .onDisappear {
                 viewModel.stop()
