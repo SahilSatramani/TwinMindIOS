@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E71A9CCC2E1880A100425B6D /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = E71A9CCB2E1880A100425B6D /* Secrets.xcconfig */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		E71A9C882E17E65100425B6D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,11 +31,25 @@
 		E71A9C782E17E64F00425B6D /* TwinMind.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TwinMind.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E71A9C872E17E65100425B6D /* TwinMindTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TwinMindTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E71A9C912E17E65100425B6D /* TwinMindUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TwinMindUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E71A9CCB2E1880A100425B6D /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E71A9CCE2E18810D00425B6D /* Exceptions for "TwinMind" folder in "TwinMind" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E71A9C772E17E64F00425B6D /* TwinMind */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E71A9C7A2E17E64F00425B6D /* TwinMind */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E71A9CCE2E18810D00425B6D /* Exceptions for "TwinMind" folder in "TwinMind" target */,
+			);
 			path = TwinMind;
 			sourceTree = "<group>";
 		};
@@ -79,6 +97,7 @@
 				E71A9C942E17E65100425B6D /* TwinMindUITests */,
 				E71A9C792E17E64F00425B6D /* Products */,
 				E71A9C7A2E17E64F00425B6D /* TwinMind */,
+				E71A9CCB2E1880A100425B6D /* Secrets.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -212,6 +231,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E71A9CCC2E1880A100425B6D /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -271,6 +291,7 @@
 /* Begin XCBuildConfiguration section */
 		E71A9C992E17E65100425B6D /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E71A9CCB2E1880A100425B6D /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -334,6 +355,7 @@
 		};
 		E71A9C9A2E17E65100425B6D /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E71A9CCB2E1880A100425B6D /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -398,6 +420,7 @@
 				DEVELOPMENT_TEAM = J8L626JJUN;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TwinMind/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "$(Recording)";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -428,6 +451,7 @@
 				DEVELOPMENT_TEAM = J8L626JJUN;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TwinMind/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "$(Recording)";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

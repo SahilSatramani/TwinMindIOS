@@ -89,4 +89,31 @@ final class AudioRecorderService: NSObject, ObservableObject {
         audioEngine.inputNode.removeTap(onBus: 0)
         audioEngine.stop()
     }
+    func pauseRecording() {
+        audioEngine.inputNode.removeTap(onBus: 0)
+        audioEngine.pause()
+        timer?.invalidate()
+        print("Recording paused")
+    }
+
+    func resumeRecording() {
+        let input = audioEngine.inputNode
+        let format = input.inputFormat(forBus: 0)
+
+        do {
+            audioFile = try AVAudioFile(forWriting: outputURL!, settings: format.settings)
+            input.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
+                try? self.audioFile?.write(from: buffer)
+            }
+            try audioEngine.start()
+
+            timer = Timer.scheduledTimer(withTimeInterval: chunkDuration, repeats: true) { _ in
+                self.splitSegment()
+            }
+
+            print("Recording resumed")
+        } catch {
+            print("Failed to resume recording:", error)
+        }
+    }
 }

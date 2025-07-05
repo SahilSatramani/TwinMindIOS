@@ -2,7 +2,6 @@ import SwiftUI
 
 enum MainTab: String, CaseIterable {
     case memories = "Memories"
-    case calendar = "Calendar"
     case questions = "Questions"
 }
 

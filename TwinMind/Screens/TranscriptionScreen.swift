@@ -1,14 +1,14 @@
 import SwiftUI
 
 enum TranscriptionTab: String, CaseIterable {
-    case questions = "Questions"
     case notes = "Notes"
     case transcript = "Transcript"
 }
 
 struct TranscriptionScreen: View {
     @Environment(\.dismiss) var dismiss
-    @State private var selectedTab: TranscriptionTab = .questions
+    @Environment(\.modelContext) private var modelContext
+    @State private var selectedTab: TranscriptionTab = .transcript
     @State private var sessionTitle: String = "Untitled"
 
     @StateObject private var viewModel = TranscriptionViewModel()
@@ -45,6 +45,7 @@ struct TranscriptionScreen: View {
             .padding(.horizontal)
             .padding(.top)
             .onAppear {
+                viewModel.setContext(modelContext)
                 viewModel.start()
                 startTimer()
             }
@@ -78,14 +79,12 @@ struct TranscriptionScreen: View {
             // Tab Content
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    if selectedTab == .questions {
-                        Text("Questions tab content placeholder")
-                    } else if selectedTab == .notes {
+                    if selectedTab == .notes {
                         Text("Notes tab content placeholder")
                     } else if selectedTab == .transcript {
                         ForEach(viewModel.transcriptChunks) { chunk in
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(formattedTime(chunk.time))
+                                Text(formattedTime(chunk.timestamp))
                                     .font(.caption)
                                     .bold()
                                 Text(chunk.text)
@@ -119,6 +118,18 @@ struct TranscriptionScreen: View {
                     .padding()
                     .background(Color.gray.opacity(0.1))
                     .cornerRadius(12)
+                    
+                    Button(action: {
+                            viewModel.togglePauseResume()
+                        }) {
+                            Text(viewModel.isPaused ? "Resume" : "Pause")
+                                .foregroundColor(.blue)
+                                .padding(.horizontal)
+                                .padding(.vertical, 12)
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(12)
+                        }
+
 
                     // Stop Button
                     Button(action: {
@@ -140,7 +151,6 @@ struct TranscriptionScreen: View {
         }
     }
 
-    // MARK: - Timer Helpers
 
     private func startTimer() {
         recordingStartTime = Date()
