@@ -9,6 +9,7 @@ enum MainTab: String, CaseIterable {
 struct MainScreen: View {
     @State private var selectedTab: MainTab = .memories
     @Query(sort: \RecordingSession.date, order: .reverse) var sessions: [RecordingSession]
+    @State private var navPath = NavigationPath()
 
     var groupedSessions: [(String, [RecordingSession])] {
         Dictionary(grouping: sessions) { session in
@@ -20,19 +21,15 @@ struct MainScreen: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navPath) {
             VStack(spacing: 0) {
-                // Top
                 TopBar()
-
                 Divider()
 
                 // Tabs
                 HStack {
                     ForEach(MainTab.allCases, id: \.self) { tab in
-                        Button(action: {
-                            selectedTab = tab
-                        }) {
+                        Button(action: { selectedTab = tab }) {
                             VStack {
                                 Text(tab.rawValue)
                                     .foregroundColor(selectedTab == tab ? .blue : .gray)
@@ -49,63 +46,21 @@ struct MainScreen: View {
 
                 Divider()
 
-                // Content
                 if selectedTab == .memories {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
-                            ForEach(groupedSessions, id: \.0) { (dateString, sessions) in
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text(dateString)
-                                        .font(.headline)
-                                        .padding(.horizontal)
-
-                                    ForEach(sessions) { session in
-                                        NavigationLink(destination: TranscriptionScreen(session: session, isReadOnly: true)) {
-                                            HStack {
-                                                Text(formattedTime(session.date))
-                                                    .font(.caption)
-                                                    .foregroundColor(.gray)
-
-                                                VStack(alignment: .leading) {
-                                                    Text(session.title)
-                                                        .font(.subheadline)
-                                                        .lineLimit(1)
-
-                                                    Text("\(Int(session.duration / 60))m")
-                                                        .font(.caption)
-                                                        .foregroundColor(.gray)
-                                                }
-
-                                                Spacer()
-                                            }
-                                            .padding()
-                                            .background(Color.gray.opacity(0.1))
-                                            .cornerRadius(10)
-                                            .padding(.horizontal)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.top)
-                    }
+                    MemoriesTabView(sessions: sessions)
                 } else if selectedTab == .questions {
                     Spacer()
                     Text("Questions tab coming soon")
                         .foregroundColor(.gray)
                 }
 
-                // Bottom
-                BottomBar()
+                BottomBar(path: $navPath)
                     .padding(.bottom, 8)
                     .padding(.horizontal)
             }
+            .navigationDestination(for: RecordingSession.self) { session in
+                TranscriptionScreen(session: session, isReadOnly: false)
+            }
         }
-    }
-
-    private func formattedTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
     }
 }

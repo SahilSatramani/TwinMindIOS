@@ -8,7 +8,9 @@ class RecordingSession {
     var date: Date
     var location: String
     var duration: TimeInterval
+    var summary: String?
     @Relationship(deleteRule: .cascade) var transcriptChunks: [TranscriptChunk]
+    @Relationship(deleteRule: .cascade) var questions: [QAItem]
 
     init(title: String, location: String, duration: TimeInterval = 0) {
         self.id = UUID()

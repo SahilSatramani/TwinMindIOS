@@ -1,19 +1,24 @@
 import SwiftUI
+import SwiftData
 
 struct BottomBar: View {
+    @Environment(\.modelContext) private var modelContext
+    @Binding var path: NavigationPath
+
     var body: some View {
-        HStack(spacing: 16) {
-            // NavigationLink to create a new session
-            NavigationLink(destination: TranscriptionScreen(session: RecordingSession(title: "Untitled", location: "Boston"), isReadOnly: false)) {
-                HStack {
-                    Image(systemName: "mic.fill")
-                    Text("Start New Recording")
-                }
-                .foregroundColor(.white)
-                .padding()
-                .background(Color.blue)
-                .cornerRadius(12)
+        Button(action: {
+            let session = RecordingSession(title: "Untitled", location: "Boston")
+            modelContext.insert(session)
+            path.append(session)
+        }) {
+            HStack {
+                Image(systemName: "mic.fill")
+                Text("Start New Recording")
             }
+            .foregroundColor(.white)
+            .padding()
+            .background(Color.blue)
+            .cornerRadius(12)
         }
     }
 }
