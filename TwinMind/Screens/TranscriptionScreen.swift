@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+
 enum TranscriptionTab: String, CaseIterable {
     case notes = "Notes"
     case transcript = "Transcript"
@@ -8,10 +9,13 @@ enum TranscriptionTab: String, CaseIterable {
 struct TranscriptionScreen: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Query var sessions: [RecordingSession]
+
+    let session: RecordingSession?
+    let isReadOnly: Bool
+
     @State private var selectedTab: TranscriptionTab = .transcript
     @State private var sessionTitle: String = "Untitled"
-    
+
     @StateObject private var viewModel = TranscriptionViewModel()
 
     @State private var recordingStartTime: Date?
@@ -20,7 +24,7 @@ struct TranscriptionScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Title + Timestamp + Timer
+            // Header with title + timer
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(sessionTitle)
@@ -29,17 +33,19 @@ struct TranscriptionScreen: View {
 
                     Spacer()
 
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 10, height: 10)
-                        Text(timeString(from: elapsedSeconds))
-                            .font(.subheadline)
-                            .foregroundColor(.red)
+                    if !isReadOnly {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 10, height: 10)
+                            Text(timeString(from: elapsedSeconds))
+                                .font(.subheadline)
+                                .foregroundColor(.red)
+                        }
                     }
                 }
 
-                Text("July 4, 2025 • 1:34 PM • Boston, MA")
+                Text("\(formattedDateTime()) • Boston, MA")
                     .font(.caption)
                     .foregroundColor(.gray)
             }
@@ -47,14 +53,19 @@ struct TranscriptionScreen: View {
             .padding(.top)
             .onAppear {
                 viewModel.setContext(modelContext)
-                viewModel.start()
-                startTimer()
-                
-                print("🗂 Total saved sessions: \(sessions.count)")
+                if isReadOnly, let session {
+                    sessionTitle = session.title
+                    viewModel.loadSession(session)
+                } else {
+                    viewModel.start()
+                    startTimer()
+                }
             }
             .onDisappear {
-                viewModel.stop()
-                stopTimer()
+                if !isReadOnly {
+                    viewModel.stop()
+                    stopTimer()
+                }
             }
 
             // Tabs
@@ -83,8 +94,8 @@ struct TranscriptionScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     if selectedTab == .notes {
-                        Text("Notes tab content placeholder")
-                    } else if selectedTab == .transcript {
+                        Text("Notes coming soon...")
+                    } else {
                         ForEach(viewModel.transcriptChunks) { chunk in
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(formattedTime(chunk.timestamp))
@@ -95,10 +106,12 @@ struct TranscriptionScreen: View {
                             .padding(.vertical, 8)
                         }
 
-                        Text("Transcript is updated every 30s. Update now")
-                            .font(.caption2)
-                            .foregroundColor(.gray)
-                            .padding(.top)
+                        if !isReadOnly {
+                            Text("Transcript updates every 30s.")
+                                .font(.caption2)
+                                .foregroundColor(.gray)
+                                .padding(.top)
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -111,18 +124,22 @@ struct TranscriptionScreen: View {
             // Bottom Controls
             VStack(spacing: 12) {
                 HStack(spacing: 12) {
-                    // Chat Input
-                    HStack {
-                        Image(systemName: "bubble.left")
-                            .foregroundColor(.gray)
-                        TextField("Chat with Transcript", text: .constant(""))
-                            .textFieldStyle(PlainTextFieldStyle())
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(12)
-                    
+                    // Chat button (common to both modes)
                     Button(action: {
+                        print("💬 Chat tapped")
+                    }) {
+                        HStack {
+                            Image(systemName: "bubble.left")
+                            Text("Chat with Transcript")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(12)
+                    }
+
+                    if !isReadOnly {
+                        Button(action: {
                             viewModel.togglePauseResume()
                         }) {
                             Text(viewModel.isPaused ? "Resume" : "Pause")
@@ -133,19 +150,18 @@ struct TranscriptionScreen: View {
                                 .cornerRadius(12)
                         }
 
-
-                    // Stop Button
-                    Button(action: {
-                        viewModel.stop()
-                        stopTimer()
-                        dismiss()
-                    }) {
-                        Text("Stop")
-                            .foregroundColor(.red)
-                            .padding(.horizontal)
-                            .padding(.vertical, 12)
-                            .background(Color.red.opacity(0.1))
-                            .cornerRadius(12)
+                        Button(action: {
+                            viewModel.stop()
+                            stopTimer()
+                            dismiss()
+                        }) {
+                            Text("Stop")
+                                .foregroundColor(.red)
+                                .padding(.horizontal)
+                                .padding(.vertical, 12)
+                                .background(Color.red.opacity(0.1))
+                                .cornerRadius(12)
+                        }
                     }
                 }
             }
@@ -154,6 +170,12 @@ struct TranscriptionScreen: View {
         }
     }
 
+    private func formattedDateTime() -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: Date())
+    }
 
     private func startTimer() {
         recordingStartTime = Date()
@@ -178,8 +200,4 @@ struct TranscriptionScreen: View {
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
     }
-}
-
-#Preview {
-    TranscriptionScreen()
 }

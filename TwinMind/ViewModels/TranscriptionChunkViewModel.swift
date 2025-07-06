@@ -5,7 +5,7 @@ final class TranscriptionViewModel: ObservableObject {
     @Published var transcriptChunks: [TranscriptChunk] = []
     @Published var isPaused: Bool = false
 
-    private let recorder = AudioRecorderService()
+    let recorder = AudioRecorderService()
     private let whisper = WhisperService()
 
     private var modelContext: ModelContext?
@@ -59,5 +59,8 @@ final class TranscriptionViewModel: ObservableObject {
                 session.transcriptChunks.append(chunk) 
             }
         }
+    }
+    func loadSession(_ session: RecordingSession) {
+        self.transcriptChunks = session.transcriptChunks
     }
 }
