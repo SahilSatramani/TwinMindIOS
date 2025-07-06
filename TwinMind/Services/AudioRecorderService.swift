@@ -88,11 +88,19 @@ final class AudioRecorderService: NSObject, ObservableObject {
         audioEngine.inputNode.removeTap(onBus: 0)
         audioEngine.stop()
 
-        if let url = outputURL {
+        guard let url = outputURL else { return }
+
+        do {
+            let data = try Data(contentsOf: url)
+            let encrypted = try EncryptionHelper.encrypt(data)
+            try encrypted.write(to: url, options: .atomic)
+
             onSegmentReady?(url, currentStartTime)
+        } catch {
+            print("Encryption failed: \(error)")
         }
 
-        startRecording()  // Restart a new segment
+        startRecording()
     }
 
     func stopRecording() {

@@ -1,5 +1,6 @@
 import Foundation
 import Speech
+import CryptoKit
 
 final class WhisperService {
     private let apiKey: String = {
@@ -9,7 +10,7 @@ final class WhisperService {
         }
         return key
     }()
-    
+
     private var failureCount = 0
     private let failureThreshold = 5
 
@@ -69,6 +70,13 @@ final class WhisperService {
     }
 
     private func makeWhisperCall(url: URL, completion: @escaping (String?) -> Void) {
+        guard let encryptedData = try? Data(contentsOf: url),
+              let decryptedData = try? EncryptionHelper.decrypt(encryptedData) else {
+            print("Failed to decrypt audio for Whisper")
+            completion(nil)
+            return
+        }
+
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/audio/transcriptions")!)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -76,19 +84,13 @@ final class WhisperService {
         let boundary = UUID().uuidString
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
-        guard let audioData = try? Data(contentsOf: url) else {
-            print("Failed to read audio file at \(url)")
-            completion(nil)
-            return
-        }
-
-        var body = Data()
         let filename = url.lastPathComponent
 
+        var body = Data()
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
         body.append("Content-Type: audio/wav\r\n\r\n".data(using: .utf8)!)
-        body.append(audioData)
+        body.append(decryptedData)
         body.append("\r\n".data(using: .utf8)!)
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"model\"\r\n\r\n".data(using: .utf8)!)
@@ -111,8 +113,15 @@ final class WhisperService {
 
     private func transcribeWithApple(url: URL, completion: @escaping (String?) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
+            guard let encryptedData = try? Data(contentsOf: url),
+                  let decryptedURL = try? self.decryptToTempFile(encryptedData) else {
+                print("Failed to decrypt for Apple STT")
+                completion(nil)
+                return
+            }
+
             let recognizer = SFSpeechRecognizer()
-            let request = SFSpeechURLRecognitionRequest(url: url)
+            let request = SFSpeechURLRecognitionRequest(url: decryptedURL)
 
             recognizer?.recognitionTask(with: request) { result, error in
                 DispatchQueue.main.async {
@@ -126,5 +135,12 @@ final class WhisperService {
                 }
             }
         }
+    }
+
+    private func decryptToTempFile(_ encryptedData: Data) throws -> URL {
+        let decrypted = try EncryptionHelper.decrypt(encryptedData)
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("decrypted-\(UUID().uuidString).wav")
+        try decrypted.write(to: tempURL, options: .atomic)
+        return tempURL
     }
 }

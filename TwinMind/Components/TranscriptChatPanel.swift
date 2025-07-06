@@ -34,7 +34,7 @@ struct TranscriptChatPanel: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    TextField("Ask anything about this transcript...", text: $userInput)
+                    TextField("Ask anything...", text: $userInput)
                         .padding()
                         .background(Color(.systemGray6))
                         .cornerRadius(10)
