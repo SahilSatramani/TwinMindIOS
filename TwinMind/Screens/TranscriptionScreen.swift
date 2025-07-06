@@ -37,11 +37,17 @@ struct TranscriptionScreen: View {
                             .font(.subheadline)
                             .foregroundColor(.red)
                     }
+                    
                 }
 
                 Text("July 4, 2025 • 1:34 PM • Boston, MA")
                     .font(.caption)
                     .foregroundColor(.gray)
+                ProgressView(value: viewModel.recorder.currentLevel, total: 1.0)
+                    .progressViewStyle(.linear)
+                    .frame(height: 4)
+                    .padding(.top, 4)
+                    .accentColor(.green)
             }
             .padding(.horizontal)
             .padding(.top)

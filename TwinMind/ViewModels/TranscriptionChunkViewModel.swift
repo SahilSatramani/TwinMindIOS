@@ -5,7 +5,7 @@ final class TranscriptionViewModel: ObservableObject {
     @Published var transcriptChunks: [TranscriptChunk] = []
     @Published var isPaused: Bool = false
 
-    private let recorder = AudioRecorderService()
+    let recorder = AudioRecorderService()
     private let whisper = WhisperService()
 
     private var modelContext: ModelContext?

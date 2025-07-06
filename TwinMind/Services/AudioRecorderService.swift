@@ -8,6 +8,15 @@ final class AudioRecorderService: NSObject, ObservableObject {
     private var outputURL: URL?
     private let chunkDuration: TimeInterval = 30
     private var currentStartTime: Date = Date()
+    private let audioSettings: [String: Any] = [
+        AVFormatIDKey: Int(kAudioFormatLinearPCM),
+        AVSampleRateKey: 44100,
+        AVNumberOfChannelsKey: 1,
+        AVLinearPCMBitDepthKey: 16,
+        AVLinearPCMIsBigEndianKey: false,
+        AVLinearPCMIsFloatKey: false
+    ]
+    @Published var currentLevel: Float = 0.0
 
     var onSegmentReady: ((URL, Date) -> Void)?
 
@@ -54,7 +63,7 @@ final class AudioRecorderService: NSObject, ObservableObject {
         outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("chunk-\(UUID().uuidString).wav")
 
         do {
-            audioFile = try AVAudioFile(forWriting: outputURL!, settings: format.settings)
+            audioFile = try AVAudioFile(forWriting: outputURL!, settings: audioSettings)
         } catch {
             print("Failed to create file:", error)
             return
@@ -62,6 +71,7 @@ final class AudioRecorderService: NSObject, ObservableObject {
 
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
             try? self.audioFile?.write(from: buffer)
+            self.currentLevel = self.calculateRMS(from: buffer)
         }
 
         try? audioEngine.start()
@@ -115,5 +125,14 @@ final class AudioRecorderService: NSObject, ObservableObject {
         } catch {
             print("Failed to resume recording:", error)
         }
+    }
+    private func calculateRMS(from buffer: AVAudioPCMBuffer) -> Float {
+        guard let floatChannelData = buffer.floatChannelData?[0] else { return 0 }
+        let frameLength = Int(buffer.frameLength)
+        var sum: Float = 0
+        for i in 0..<frameLength {
+            sum += floatChannelData[i] * floatChannelData[i]
+        }
+        return sqrt(sum / Float(frameLength))
     }
 }

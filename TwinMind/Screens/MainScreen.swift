@@ -43,10 +43,16 @@ struct MainScreen: View {
 
             Divider()
 
-            //Placeholder for tab content (to be implemented later)
-            Spacer()
+            
+            if selectedTab == .memories {
+                NavigationStack {
+                    Spacer()
+                }
+            } else if selectedTab == .questions {
+                Spacer() // Placeholder for questions UI
+            }
 
-            //Bottom Section
+            // Bottom Section
             BottomBar()
                 .padding(.bottom, 8)
                 .padding(.horizontal)

@@ -1,12 +1,6 @@
-//
-//  TwinMindApp.swift
-//  TwinMind
-//
-//  Created by Sahil Satramani on 7/4/25.
-//
-
 import SwiftUI
 import SwiftData
+import Speech
 
 @main
 struct TwinMindApp: App {
@@ -26,6 +20,12 @@ struct TwinMindApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    //  Request permission for Apple Speech Recognition
+                    SFSpeechRecognizer.requestAuthorization { status in
+                        print(" Apple Speech Permission: \(status)")
+                    }
+                }
         }
         .modelContainer(for: [RecordingSession.self, TranscriptChunk.self])
     }
