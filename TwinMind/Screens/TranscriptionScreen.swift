@@ -5,16 +5,39 @@ enum TranscriptionTab: String, CaseIterable {
     case notes = "Notes"
     case transcript = "Transcript"
 }
+enum NavigationUtil {
+    static func navigateTo<V: View>(_ view: V) {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            return
+        }
+
+        let rootView = view
+            .modelContainer(for: [RecordingSession.self, TranscriptChunk.self])
+
+        let hostingController = UIHostingController(rootView: rootView)
+        window.rootViewController = hostingController
+        window.makeKeyAndVisible()
+    }
+}
 
 struct TranscriptionScreen: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) private var modelContext
 
-    let session: RecordingSession?
+    let session: RecordingSession
     let isReadOnly: Bool
 
-    @State private var selectedTab: TranscriptionTab = .transcript
+    @State private var selectedTab: TranscriptionTab
+
+    init(session: RecordingSession, isReadOnly: Bool) {
+        self.session = session
+        self.isReadOnly = isReadOnly
+        self._selectedTab = State(initialValue: isReadOnly ? .notes : .transcript)
+    }
+    
     @State private var sessionTitle: String = "Untitled"
+    @State private var showChat = false
 
     @StateObject private var viewModel = TranscriptionViewModel()
 
@@ -24,9 +47,17 @@ struct TranscriptionScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header with title + timer
+            // Header
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
+                    if isReadOnly {
+                        Button(action: {
+                            NavigationUtil.navigateTo(MainScreen())
+                        }) {
+                            Image(systemName: "chevron.left")
+                                .foregroundColor(.blue)
+                        }
+                    }
                     Text(sessionTitle)
                         .font(.title3)
                         .bold()
@@ -53,11 +84,12 @@ struct TranscriptionScreen: View {
             .padding(.top)
             .onAppear {
                 viewModel.setContext(modelContext)
-                if isReadOnly, let session {
-                    sessionTitle = session.title
+                sessionTitle = session.title
+
+                if isReadOnly {
                     viewModel.loadSession(session)
                 } else {
-                    viewModel.start()
+                    viewModel.start(with: session)
                     startTimer()
                 }
             }
@@ -71,9 +103,7 @@ struct TranscriptionScreen: View {
             // Tabs
             HStack {
                 ForEach(TranscriptionTab.allCases, id: \.self) { tab in
-                    Button(action: {
-                        selectedTab = tab
-                    }) {
+                    Button(action: { selectedTab = tab }) {
                         VStack {
                             Text(tab.rawValue)
                                 .font(.subheadline)
@@ -94,7 +124,18 @@ struct TranscriptionScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     if selectedTab == .notes {
-                        Text("Notes coming soon...")
+                        if let summary = session.summary {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Summary")
+                                    .font(.headline)
+
+                                Text(summary)
+                                    .font(.body)
+                            }
+                        } else {
+                            Text("No summary available")
+                                .foregroundColor(.gray)
+                        }
                     } else {
                         ForEach(viewModel.transcriptChunks) { chunk in
                             VStack(alignment: .leading, spacing: 4) {
@@ -124,9 +165,9 @@ struct TranscriptionScreen: View {
             // Bottom Controls
             VStack(spacing: 12) {
                 HStack(spacing: 12) {
-                    // Chat button (common to both modes)
+                    // Chat button
                     Button(action: {
-                        print("💬 Chat tapped")
+                        showChat = true
                     }) {
                         HStack {
                             Image(systemName: "bubble.left")
@@ -153,8 +194,8 @@ struct TranscriptionScreen: View {
                         Button(action: {
                             viewModel.stop()
                             stopTimer()
-                            dismiss()
-                        }) {
+                            dismiss() // Or navigate back naturally
+                        })  {
                             Text("Stop")
                                 .foregroundColor(.red)
                                 .padding(.horizontal)
@@ -168,8 +209,16 @@ struct TranscriptionScreen: View {
             .padding(.horizontal)
             .padding(.bottom, 8)
         }
+        .fullScreenCover(isPresented: $showChat) {
+            TranscriptChatPanel(
+                transcriptText: viewModel.transcriptChunks.map { $0.text }.joined(separator: "\n"),
+                isPresented: $showChat,
+                currentSession: session
+            )
+        }
     }
 
+    // Utility Functions
     private func formattedDateTime() -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
