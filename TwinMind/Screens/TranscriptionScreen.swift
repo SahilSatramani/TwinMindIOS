@@ -5,6 +5,7 @@ enum TranscriptionTab: String, CaseIterable {
     case notes = "Notes"
     case transcript = "Transcript"
 }
+
 enum NavigationUtil {
     static func navigateTo<V: View>(_ view: V) {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -13,7 +14,7 @@ enum NavigationUtil {
         }
 
         let rootView = view
-            .modelContainer(for: [RecordingSession.self, TranscriptChunk.self])
+            .modelContainer(for: [RecordingSession.self, TranscriptChunk.self, QAItem.self])
 
         let hostingController = UIHostingController(rootView: rootView)
         window.rootViewController = hostingController
@@ -29,13 +30,6 @@ struct TranscriptionScreen: View {
     let isReadOnly: Bool
 
     @State private var selectedTab: TranscriptionTab
-
-    init(session: RecordingSession, isReadOnly: Bool) {
-        self.session = session
-        self.isReadOnly = isReadOnly
-        self._selectedTab = State(initialValue: isReadOnly ? .notes : .transcript)
-    }
-    
     @State private var sessionTitle: String = "Untitled"
     @State private var showChat = false
 
@@ -44,6 +38,12 @@ struct TranscriptionScreen: View {
     @State private var recordingStartTime: Date?
     @State private var elapsedSeconds: Int = 0
     @State private var timer: Timer?
+
+    init(session: RecordingSession, isReadOnly: Bool) {
+        self.session = session
+        self.isReadOnly = isReadOnly
+        self._selectedTab = State(initialValue: isReadOnly ? .notes : .transcript)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -58,6 +58,7 @@ struct TranscriptionScreen: View {
                                 .foregroundColor(.blue)
                         }
                     }
+
                     Text(sessionTitle)
                         .font(.title3)
                         .bold()
@@ -82,22 +83,14 @@ struct TranscriptionScreen: View {
             }
             .padding(.horizontal)
             .padding(.top)
-            .onAppear {
-                viewModel.setContext(modelContext)
-                sessionTitle = session.title
 
-                if isReadOnly {
-                    viewModel.loadSession(session)
-                } else {
-                    viewModel.start(with: session)
-                    startTimer()
-                }
-            }
-            .onDisappear {
-                if !isReadOnly {
-                    viewModel.stop()
-                    stopTimer()
-                }
+            // Mic level bar
+            if !isReadOnly {
+                ProgressView(value: viewModel.recorder.currentLevel, total: 1.0)
+                    .progressViewStyle(LinearProgressViewStyle(tint: .green))
+                    .animation(.easeInOut(duration: 0.2), value: viewModel.recorder.currentLevel)
+                    .padding(.horizontal)
+                    .padding(.bottom, 4)
             }
 
             // Tabs
@@ -128,13 +121,14 @@ struct TranscriptionScreen: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Summary")
                                     .font(.headline)
-
                                 Text(summary)
                                     .font(.body)
                             }
+                            .padding()
                         } else {
                             Text("No summary available")
                                 .foregroundColor(.gray)
+                                .padding()
                         }
                     } else {
                         ForEach(viewModel.transcriptChunks) { chunk in
@@ -143,8 +137,12 @@ struct TranscriptionScreen: View {
                                     .font(.caption)
                                     .bold()
                                 Text(chunk.text)
+                                    .font(.body)
                             }
-                            .padding(.vertical, 8)
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .cornerRadius(10)
+                            .padding(.horizontal)
                         }
 
                         if !isReadOnly {
@@ -152,20 +150,19 @@ struct TranscriptionScreen: View {
                                 .font(.caption2)
                                 .foregroundColor(.gray)
                                 .padding(.top)
+                                .padding(.horizontal)
                         }
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 40)
-                .padding(.horizontal)
+                .padding(.top, 16)
             }
 
             Spacer()
 
-            // Bottom Controls
+            // Controls
             VStack(spacing: 12) {
                 HStack(spacing: 12) {
-                    // Chat button
+                    // Chat Button
                     Button(action: {
                         showChat = true
                     }) {
@@ -175,7 +172,7 @@ struct TranscriptionScreen: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.gray.opacity(0.1))
+                        .background(Color(.systemGray6))
                         .cornerRadius(12)
                     }
 
@@ -194,8 +191,8 @@ struct TranscriptionScreen: View {
                         Button(action: {
                             viewModel.stop()
                             stopTimer()
-                            dismiss() // Or navigate back naturally
-                        })  {
+                            dismiss()
+                        }) {
                             Text("Stop")
                                 .foregroundColor(.red)
                                 .padding(.horizontal)
@@ -215,6 +212,22 @@ struct TranscriptionScreen: View {
                 isPresented: $showChat,
                 currentSession: session
             )
+        }
+        .onAppear {
+            viewModel.setContext(modelContext)
+            sessionTitle = session.title
+            if isReadOnly {
+                viewModel.loadSession(session)
+            } else {
+                viewModel.start(with: session)
+                startTimer()
+            }
+        }
+        .onDisappear {
+            if !isReadOnly {
+                viewModel.stop()
+                stopTimer()
+            }
         }
     }
 

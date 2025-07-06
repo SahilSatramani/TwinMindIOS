@@ -1,9 +1,4 @@
-//
-//  QAResponseSheet.swift
-//  TwinMind
-//
-//  Created by Sahil Satramani on 7/6/25.
-//
+
 
 
 import SwiftUI
@@ -34,9 +29,14 @@ struct QAResponseSheet: View {
 
             // Scrollable answer
             ScrollView {
-                Text(qaItem.answer)
-                    .font(.body)
-                    .padding(.horizontal)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Answer:")
+                        .font(.headline)
+                        .padding(.bottom, 4)
+                    Text(qaItem.answer)
+                        .font(.body)
+                }
+                .padding(.horizontal)
             }
 
             Spacer()
