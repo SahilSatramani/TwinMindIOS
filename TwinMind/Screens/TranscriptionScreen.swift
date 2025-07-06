@@ -212,7 +212,8 @@ struct TranscriptionScreen: View {
         .fullScreenCover(isPresented: $showChat) {
             TranscriptChatPanel(
                 transcriptText: viewModel.transcriptChunks.map { $0.text }.joined(separator: "\n"),
-                isPresented: $showChat
+                isPresented: $showChat,
+                currentSession: session
             )
         }
     }

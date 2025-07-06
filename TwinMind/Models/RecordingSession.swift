@@ -19,5 +19,6 @@ class RecordingSession {
         self.location = location
         self.duration = duration
         self.transcriptChunks = []
+        self.questions = []
     }
 }

@@ -49,9 +49,7 @@ struct MainScreen: View {
                 if selectedTab == .memories {
                     MemoriesTabView(sessions: sessions)
                 } else if selectedTab == .questions {
-                    Spacer()
-                    Text("Questions tab coming soon")
-                        .foregroundColor(.gray)
+                    QuestionsTabView()
                 }
 
                 BottomBar(path: $navPath)

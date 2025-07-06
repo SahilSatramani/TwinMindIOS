@@ -1,8 +1,13 @@
 import SwiftUI
+import SwiftData
 
 struct TranscriptChatPanel: View {
+    @Environment(\.modelContext) private var modelContext
     let transcriptText: String
+    
     @Binding var isPresented: Bool
+    
+    let currentSession: RecordingSession
 
     @State private var userInput: String = ""
     @State private var response: String? = nil
@@ -95,6 +100,12 @@ struct TranscriptChatPanel: View {
             DispatchQueue.main.async {
                 isLoading = false
                 self.response = result ?? "No response received."
+                
+                if let answer = result?.trimmingCharacters(in: .whitespacesAndNewlines) {
+                    let qa = QAItem(question: question, answer: answer, session: currentSession)
+                    modelContext.insert(qa)
+                    currentSession.questions.append(qa)
+                }
             }
         }
     }
