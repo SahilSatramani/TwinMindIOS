@@ -60,4 +60,7 @@ final class TranscriptionViewModel: ObservableObject {
             }
         }
     }
+    func loadSession(_ session: RecordingSession) {
+        self.transcriptChunks = session.transcriptChunks
+    }
 }
